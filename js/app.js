@@ -429,17 +429,15 @@ const App = {
     if (nameEl) nameEl.textContent = exercise.name;
     if (musclesEl) musclesEl.textContent = exercise.muscles;
 
-    if (tagsEl) {
-      tagsEl.innerHTML = '';
-      // Show up to 3 equipment alternatives
-      exercise.equipment.slice(0, 3).forEach(eq => {
-        const tag = document.createElement('span');
-        tag.className = 'equipment-tag';
-        tag.textContent = eq;
-        tagsEl.appendChild(tag);
-      });
-    },
-
+if (tagsEl) {
+  tagsEl.innerHTML = '';
+  exercise.equipment.slice(0, 3).forEach(eq => {
+    const tag = document.createElement('span');
+    tag.className = 'equipment-tag';
+    tag.textContent = eq;
+    tagsEl.appendChild(tag);
+  });
+}
     // Set tracker display
     this._updateSetDisplay();
 
