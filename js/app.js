@@ -466,8 +466,8 @@ const App = {
       content.classList.add('slide-in');
     }
 
-    this.saveProgress();
-  },
+this.saveProgress();
+},
 
 _loadVideo(exercise) {
   const iframe = document.getElementById('exercise-video');
@@ -487,7 +487,7 @@ _loadVideo(exercise) {
   }
 
   iframe.src = exercise.video;
-}
+},
 
   _updateSetDisplay() {
     const day = workoutData.days[this.state.selectedDayIndex];
