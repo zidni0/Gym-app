@@ -1,0 +1,1108 @@
+/* ============================================================
+   styles.css — Core styles for Kazi's Gym App
+   ============================================================ */
+
+/* ---- CUSTOM PROPERTIES ---- */
+:root {
+  --bg-deep:      #0a0a1a;
+  --bg-mid:       #0f0f2e;
+  --accent:       #4f8ef7;
+  --accent-glow:  rgba(79, 142, 247, 0.28);
+  --accent-amber: #f7a94f;
+  --accent-red:   #f74f4f;
+  --accent-green: #4ade80;
+  --glass-bg:     rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.58);
+  --text-muted:   rgba(255, 255, 255, 0.32);
+  --card-radius:  20px;
+  --ease-smooth:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- RESET ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+input {
+  font-family: inherit;
+  outline: none;
+}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+#app {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+}
+
+/* On desktop: subtle outer glow to frame the phone column */
+@media (min-width: 520px) {
+  #app {
+    box-shadow: 0 0 80px rgba(79, 142, 247, 0.08);
+  }
+}
+
+/* ============================================================
+   SCREENS — stacked with JS-driven transform transitions
+   ============================================================ */
+.screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  visibility: hidden;
+  /* Transforms are applied inline by app.js for smooth slide transitions */
+}
+
+/* Only home is visible at startup (set by app.js init) */
+
+
+/* ============================================================
+   SCREEN 1 — HOME
+   ============================================================ */
+#screen-home {
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-container {
+  min-height: 100dvh;
+  padding: 56px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Header */
+.home-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.app-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #4f8ef7 0%, #a855f7 50%, #4f8ef7 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 5s linear infinite;
+}
+
+.today-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+/* Resume banner */
+.resume-banner {
+  background: rgba(79, 142, 247, 0.10);
+  border: 1px solid rgba(79, 142, 247, 0.28);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: scale-appear 350ms var(--ease-bounce);
+}
+
+.resume-banner.hidden {
+  display: none;
+}
+
+.resume-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.resume-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.resume-text strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.resume-text span {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-resume-yes,
+.btn-resume-no {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: transform 200ms var(--ease-smooth), opacity 200ms;
+}
+
+.btn-resume-yes {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-resume-no {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+}
+
+.btn-resume-yes:active,
+.btn-resume-no:active {
+  transform: scale(0.96);
+}
+
+/* Day cards */
+.day-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.day-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--card-radius);
+  padding: 22px 20px 18px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 300ms var(--ease-smooth),
+              box-shadow 300ms var(--ease-smooth);
+  animation: card-appear 420ms var(--ease-bounce) both;
+}
+
+/* Accent glow overlay on hover */
+.day-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -10%;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 350ms;
+}
+
+.day-card:hover::after {
+  opacity: 1;
+}
+
+.day-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(79, 142, 247, 0.18);
+  border-color: rgba(79, 142, 247, 0.22);
+}
+
+.day-card:active,
+.day-card.tapped {
+  transform: scale(0.97);
+  box-shadow: 0 2px 12px rgba(79, 142, 247, 0.12);
+}
+
+.day-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.day-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.day-weekday {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.day-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-bottom: 5px;
+}
+
+.day-muscles {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.day-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-exercises-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.day-card-arrow {
+  width: 30px;
+  height: 30px;
+  background: rgba(79, 142, 247, 0.14);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Motivational quote */
+.quote-container {
+  padding-top: 28px;
+  text-align: center;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.motivational-quote {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.6;
+  transition: opacity 450ms;
+}
+
+
+/* ============================================================
+   SCREEN 2 — WARMUP
+   ============================================================ */
+#screen-warmup {
+  background: linear-gradient(160deg, var(--bg-deep) 0%, #130a28 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+  animation: bg-pulse 6s ease-in-out infinite;
+}
+
+.warmup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.warmup-icon {
+  font-size: 88px;
+  line-height: 1;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.warmup-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.warmup-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  max-width: 300px;
+}
+
+.btn-ready {
+  margin-top: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+
+/* ============================================================
+   PRIMARY BUTTON — reusable
+   ============================================================ */
+.btn-primary {
+  display: block;
+  background: linear-gradient(135deg, #4f8ef7 0%, #7b5af7 100%);
+  border-radius: 16px;
+  padding: 18px 24px;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(79, 142, 247, 0.38);
+  transition: transform 300ms var(--ease-smooth),
+              box-shadow 300ms var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 60%);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(79, 142, 247, 0.52);
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 10px rgba(79, 142, 247, 0.28);
+}
+
+
+/* ============================================================
+   SCREEN 3 — EXERCISE VIEW
+   ============================================================ */
+#screen-exercise {
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 100%);
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Progress bar — thin glowing strip at very top */
+.progress-bar-container {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #a855f7);
+  box-shadow: 0 0 10px var(--accent);
+  transition: width 700ms var(--ease-smooth);
+  width: 0%;
+}
+
+/* Top bar */
+.exercise-topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-back {
+  width: 38px;
+  height: 38px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: transform 200ms var(--ease-smooth),
+              background 200ms;
+  flex-shrink: 0;
+}
+
+.btn-back:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.btn-back:active {
+  transform: scale(0.90);
+}
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.exercise-day-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.exercise-counter {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.workout-timer {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.8px;
+  min-width: 44px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Exercise content — fills remaining space, NO overflow/scroll */
+.exercise-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 16px 14px;
+  gap: 9px;
+  overflow: hidden;
+}
+
+/* Video container */
+.video-container {
+  flex-shrink: 0;
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  aspect-ratio: 16 / 9;
+  max-height: 185px;
+}
+
+#exercise-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+}
+
+.video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 14px;
+}
+
+.video-placeholder.visible {
+  display: flex;
+}
+
+.video-placeholder-icon {
+  font-size: 28px;
+  opacity: 0.4;
+}
+
+.video-placeholder-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 12px;
+}
+
+/* Exercise info */
+.exercise-info {
+  flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.exercise-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exercise-muscles {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equipment-tags {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.equipment-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(79, 142, 247, 0.10);
+  border: 1px solid rgba(79, 142, 247, 0.22);
+  border-radius: 20px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Set tracker */
+.set-tracker {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.set-status {
+  font-family: 'Poppins', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.set-reps {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Bonus weight log widget */
+.weight-log {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.weight-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.weight-input {
+  width: 80px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  transition: border-color 200ms, background 200ms;
+}
+
+.weight-input::placeholder {
+  color: var(--text-muted);
+}
+
+.weight-input:focus {
+  border-color: rgba(79, 142, 247, 0.5);
+  background: rgba(79, 142, 247, 0.08);
+}
+
+/* Set action area */
+.set-action {
+  flex-shrink: 0;
+  position: relative;
+  min-height: 58px;
+  display: flex;
+  align-items: stretch;
+}
+
+.btn-set-done {
+  width: 100%;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #4f8ef7 0%, #7b5af7 100%);
+  border-radius: 16px;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(79, 142, 247, 0.40);
+  transition: transform 300ms var(--ease-smooth),
+              box-shadow 300ms var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-set-done::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 60%);
+}
+
+.btn-set-done:hover {
+  box-shadow: 0 6px 28px rgba(79, 142, 247, 0.55);
+  transform: translateY(-1px);
+}
+
+.btn-set-done:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 10px rgba(79, 142, 247, 0.25);
+}
+
+.btn-set-done.pulse {
+  animation: btn-pulse 380ms var(--ease-smooth);
+}
+
+/* Exercise complete message */
+.exercise-complete-msg {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent-green);
+  letter-spacing: 0.8px;
+  width: 100%;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 16px;
+  background: rgba(74, 222, 128, 0.07);
+}
+
+.exercise-complete-msg.visible {
+  display: flex;
+  animation: scale-appear 380ms var(--ease-bounce);
+}
+
+.complete-check {
+  font-size: 20px;
+}
+
+/* Next exercise preview */
+.next-exercise {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   REST TIMER — BOTTOM SHEET
+   ============================================================ */
+.rest-timer-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 480px;
+  background: #10102a;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px 24px 0 0;
+  padding: 28px 24px 48px;
+  transition: transform 420ms var(--ease-smooth);
+  z-index: 200;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.55);
+}
+
+.rest-timer-sheet.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.rest-timer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Drag handle visual cue */
+.rest-timer-content::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.timer-circle-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg); /* Start from 12 o'clock */
+}
+
+.timer-bg-circle {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 8;
+}
+
+.timer-progress-circle {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(79, 142, 247, 0.6));
+  /* transition is set inline by timer.js */
+}
+
+.timer-center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-seconds {
+  font-family: 'Poppins', sans-serif;
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.timer-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.btn-skip-rest {
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border-radius: 20px;
+  transition: color 200ms, background 200ms, transform 200ms;
+}
+
+.btn-skip-rest:hover {
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.06);
+}
+
+.btn-skip-rest:active {
+  transform: scale(0.94);
+}
+
+
+/* ============================================================
+   SCREEN 4 — DAY COMPLETE
+   ============================================================ */
+#screen-complete {
+  background: linear-gradient(160deg, #080818 0%, #0a1a30 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+}
+
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.complete-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* Animated SVG checkmark */
+.complete-checkmark {
+  margin-bottom: 4px;
+}
+
+.checkmark-svg {
+  overflow: visible;
+}
+
+.checkmark-circle {
+  fill: none;
+  stroke: var(--accent-green);
+  stroke-width: 3;
+  opacity: 0;
+  animation: checkmark-circle-appear 500ms 300ms var(--ease-smooth) forwards;
+}
+
+.checkmark-path {
+  fill: none;
+  stroke: var(--accent-green);
+  stroke-width: 5;
+  stroke-dasharray: 65;
+  stroke-dashoffset: 65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: checkmark-draw 480ms 700ms var(--ease-smooth) forwards;
+}
+
+.complete-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  animation: scale-appear 500ms 600ms var(--ease-bounce) both;
+}
+
+.complete-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  animation: scale-appear 500ms 800ms var(--ease-bounce) both;
+}
+
+.complete-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 20px 48px;
+  gap: 4px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: scale-appear 500ms 950ms var(--ease-bounce) both;
+}
+
+.complete-time-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.complete-time-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.btn-home {
+  width: 100%;
+  max-width: 320px;
+  animation: scale-appear 500ms 1100ms var(--ease-bounce) both;
+}
+
+
+/* ============================================================
+   MODAL — End workout confirmation
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-smooth);
+  padding: 24px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: #1a1a38;
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  padding: 28px 22px 22px;
+  width: 100%;
+  max-width: 300px;
+  transform: scale(0.88) translateY(12px);
+  transition: transform 320ms var(--ease-bounce);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-overlay.visible .modal {
+  transform: scale(1) translateY(0);
+}
+
+.modal-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.modal-subtext {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-modal-no {
+  flex: 1;
+  padding: 14px 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 13px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 200ms, background 200ms;
+}
+
+.btn-modal-yes {
+  flex: 1;
+  padding: 14px 8px;
+  background: rgba(247, 79, 79, 0.14);
+  border: 1px solid rgba(247, 79, 79, 0.28);
+  border-radius: 13px;
+  color: #f47575;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 200ms, background 200ms;
+}
+
+.btn-modal-no:active { transform: scale(0.96); }
+.btn-modal-yes:active { transform: scale(0.96); }
+.btn-modal-no:hover { background: rgba(255,255,255,0.12); }
+.btn-modal-yes:hover { background: rgba(247, 79, 79, 0.22); }
