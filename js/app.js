@@ -469,39 +469,25 @@ const App = {
     this.saveProgress();
   },
 
-  _loadVideo(exercise) {
-    const video = document.getElementById('exercise-video');
-    const placeholder = document.getElementById('video-placeholder');
-    const placeholderText = document.getElementById('video-placeholder-text');
+_loadVideo(exercise) {
+  const iframe = document.getElementById('exercise-video');
+  const placeholder = document.getElementById('video-placeholder');
+  const placeholderText = document.getElementById('video-placeholder-text');
 
-    if (!video || !placeholder) return;
+  if (!iframe || !placeholder) return;
 
-    // Reset state
-    video.style.display = 'block';
-    placeholder.classList.remove('visible');
+  iframe.style.display = 'block';
+  placeholder.classList.remove('visible');
 
-    // Remove old listeners by cloning
-    const freshVideo = video.cloneNode(false);
-    video.parentNode.replaceChild(freshVideo, video);
+  if (!exercise.video) {
+    iframe.style.display = 'none';
+    placeholder.classList.add('visible');
+    if (placeholderText) placeholderText.textContent = exercise.name;
+    return;
+  }
 
-    freshVideo.autoplay = true;
-    freshVideo.loop = true;
-    freshVideo.muted = true;
-    freshVideo.playsInline = true;
-
-    freshVideo.addEventListener('error', () => {
-      freshVideo.style.display = 'none';
-      placeholder.classList.add('visible');
-      if (placeholderText) placeholderText.textContent = exercise.name;
-    });
-
-    freshVideo.addEventListener('loadeddata', () => {
-      freshVideo.play().catch(() => {});
-    });
-
-    freshVideo.src = exercise.video;
-    freshVideo.load();
-  },
+  iframe.src = exercise.video;
+}
 
   _updateSetDisplay() {
     const day = workoutData.days[this.state.selectedDayIndex];
