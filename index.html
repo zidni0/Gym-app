@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <title>Gym — Kazi</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ========================================================
+       SCREEN 1 — HOME / DAY SELECTOR
+       ======================================================== -->
+  <div id="screen-home" class="screen">
+    <div class="home-container">
+
+      <div class="home-header">
+        <h1 class="app-title gradient-text">Gym</h1>
+        <p class="today-date" id="today-date"></p>
+      </div>
+
+      <!-- Resume banner (hidden until localStorage data found) -->
+      <div id="resume-banner" class="resume-banner hidden">
+        <div class="resume-content">
+          <span class="resume-icon">⚡</span>
+          <div class="resume-text">
+            <strong>Resume workout?</strong>
+            <span id="resume-detail">Loading…</span>
+          </div>
+        </div>
+        <div class="resume-actions">
+          <button id="resume-yes" class="btn-resume-yes">Resume</button>
+          <button id="resume-no"  class="btn-resume-no">Discard</button>
+        </div>
+      </div>
+
+      <!-- Day cards — rendered by app.js -->
+      <div class="day-cards" id="day-cards"></div>
+
+      <!-- Rotating motivational quote -->
+      <div class="quote-container">
+        <p class="motivational-quote" id="motivational-quote"></p>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       SCREEN 2 — PRE-WORKOUT STRETCH REMINDER
+       ======================================================== -->
+  <div id="screen-warmup" class="screen">
+    <div class="warmup-container">
+      <div class="warmup-icon">🧘</div>
+      <h2 class="warmup-title">WARM UP FIRST</h2>
+      <p class="warmup-text">
+        5–10 minutes of dynamic stretching before you lift.
+        Protect your joints.<br />
+        Arm circles · Leg swings · Hip rotations · Shoulder rolls.
+      </p>
+      <button id="btn-ready" class="btn-primary btn-ready">
+        I'M READY — LET'S GO
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       SCREEN 3 — EXERCISE VIEW
+       ======================================================== -->
+  <div id="screen-exercise" class="screen">
+
+    <!-- Full-width progress strip at very top -->
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="exercise-progress-bar"></div>
+    </div>
+
+    <!-- Top bar: back · day label + counter · elapsed timer -->
+    <div class="exercise-topbar">
+      <button class="btn-back" id="btn-back" aria-label="End workout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6"
+            stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div class="topbar-center">
+        <span class="exercise-day-label" id="exercise-day-label">DAY 1 · PUSH</span>
+        <span class="exercise-counter" id="exercise-counter">1 of 8</span>
+      </div>
+
+      <div class="workout-timer" id="workout-timer">00:00</div>
+    </div>
+
+    <!-- Main exercise content — flex column, must fit in remaining height -->
+    <div class="exercise-content" id="exercise-content">
+
+      <!-- Video -->
+      <div class="video-container">
+        <video
+          id="exercise-video"
+          autoplay loop muted playsinline
+          preload="auto"
+        ></video>
+        <div class="video-placeholder" id="video-placeholder">
+          <span class="video-placeholder-icon">▶</span>
+          <span class="video-placeholder-text" id="video-placeholder-text"></span>
+        </div>
+      </div>
+
+      <!-- Exercise name + muscles + equipment tags -->
+      <div class="exercise-info">
+        <h2 class="exercise-name"   id="exercise-name"></h2>
+        <p  class="exercise-muscles" id="exercise-muscles"></p>
+        <div class="equipment-tags" id="equipment-tags"></div>
+      </div>
+
+      <!-- Set tracker -->
+      <div class="set-tracker">
+        <div class="set-status" id="set-status">SET 1 OF 4</div>
+        <div class="set-reps"   id="set-reps">Target: 8–12 reps</div>
+
+        <!-- BONUS: optional weight logger for progressive overload tracking -->
+        <div class="weight-log">
+          <span class="weight-hint" id="weight-hint">Log weight (optional)</span>
+          <input
+            class="weight-input"
+            id="weight-input"
+            type="text"
+            inputmode="decimal"
+            placeholder="e.g. 60 kg"
+            maxlength="12"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Set action: SET DONE button or EXERCISE COMPLETE message -->
+      <div class="set-action">
+        <button class="btn-set-done" id="btn-set-done">
+          ✓&nbsp; SET DONE
+        </button>
+        <div class="exercise-complete-msg" id="exercise-complete-msg">
+          <span class="complete-check">✓</span>
+          <span>EXERCISE COMPLETE</span>
+        </div>
+      </div>
+
+      <!-- Next exercise preview -->
+      <div class="next-exercise" id="next-exercise"></div>
+
+    </div><!-- /exercise-content -->
+
+  </div><!-- /screen-exercise -->
+
+
+  <!-- ========================================================
+       REST TIMER — Bottom sheet overlay (shared z-layer)
+       ======================================================== -->
+  <div class="rest-timer-sheet" id="rest-timer-sheet">
+    <div class="rest-timer-content">
+
+      <!-- Circular countdown SVG -->
+      <div class="timer-circle-container">
+        <svg
+          class="timer-svg"
+          viewBox="0 0 120 120"
+          width="160"
+          height="160"
+          aria-hidden="true"
+        >
+          <!-- Background ring -->
+          <circle
+            class="timer-bg-circle"
+            cx="60" cy="60" r="52"
+          />
+          <!-- Animated progress ring — controlled by timer.js -->
+          <circle
+            class="timer-progress-circle"
+            id="timer-circle"
+            cx="60" cy="60" r="52"
+          />
+        </svg>
+
+        <!-- Remaining seconds displayed in center -->
+        <div class="timer-center">
+          <span class="timer-seconds" id="timer-seconds">90</span>
+        </div>
+      </div>
+
+      <div class="timer-label" id="timer-label">Rest · 90 sec</div>
+      <button class="btn-skip-rest" id="btn-skip-rest">SKIP REST</button>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       SCREEN 4 — DAY COMPLETE
+       ======================================================== -->
+  <div id="screen-complete" class="screen">
+
+    <!-- Canvas used by JS confetti engine -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="complete-container">
+
+      <!-- Self-drawing SVG checkmark -->
+      <div class="complete-checkmark">
+        <svg
+          class="checkmark-svg"
+          viewBox="0 0 80 80"
+          width="88"
+          height="88"
+          fill="none"
+        >
+          <circle
+            class="checkmark-circle"
+            cx="40" cy="40" r="36"
+          />
+          <path
+            class="checkmark-path"
+            d="M22 40L34 52L58 28"
+          />
+        </svg>
+      </div>
+
+      <h1 class="complete-title">DAY COMPLETE 💪</h1>
+      <p  class="complete-subtitle">Great work, Kazi. Rest, eat, recover.</p>
+
+      <div class="complete-time">
+        <span class="complete-time-label">Workout time</span>
+        <span class="complete-time-value" id="complete-time-value">00:00</span>
+      </div>
+
+      <button class="btn-primary btn-home" id="btn-home">
+        BACK TO HOME
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       CONFIRMATION MODAL — "End workout?"
+       ======================================================== -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <p class="modal-text">End workout?</p>
+      <p class="modal-subtext">Your progress will not be saved for this session.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-no"  id="modal-no">Keep Going</button>
+        <button class="btn-modal-yes" id="modal-yes">End Workout</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- Scripts — order matters: data first, utils, then app -->
+<script src="js/data.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
