@@ -438,7 +438,7 @@ const App = {
         tag.textContent = eq;
         tagsEl.appendChild(tag);
       });
-    }
+    },
 
     // Set tracker display
     this._updateSetDisplay();
