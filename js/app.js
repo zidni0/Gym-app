@@ -164,15 +164,28 @@ const App = {
     this.state.currentScreenEl = document.getElementById('screen-home');
     document.getElementById('screen-home').style.visibility = 'visible';
 
-    // Keep workout timer accurate when user returns from screen-off / app switch
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'visible') return;
+    // Keep workout timer accurate when user returns from screen-off / app switch.
+    // Uses both visibilitychange and pageshow (iOS relies on pageshow).
+    const updateTimerDisplay = () => {
       if (!this.state.workoutStartTime) return;
       const elapsed = Date.now() - this.state.workoutStartTime;
       const m = Math.floor(elapsed / 60000);
       const s = Math.floor((elapsed % 60000) / 1000);
       const el = document.getElementById('workout-timer');
       if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') updateTimerDisplay();
+    });
+
+    window.addEventListener('pageshow', () => {
+      this._restoreWorkoutTimer();
+      updateTimerDisplay();
+    });
+
+    window.addEventListener('pagehide', () => {
+      this._persistWorkoutTimer();
     });
   },
 
@@ -691,6 +704,32 @@ _loadVideo(exercise) {
     }
     const el = document.getElementById('workout-timer');
     if (el) el.textContent = '00:00';
+    localStorage.removeItem('gym-app-workout-timer');
+  },
+
+  _persistWorkoutTimer() {
+    if (!this.state.workoutStartTime) return;
+    try {
+      localStorage.setItem('gym-app-workout-timer', JSON.stringify({
+        workoutStartTime: this.state.workoutStartTime
+      }));
+    } catch (e) {}
+  },
+
+  _restoreWorkoutTimer() {
+    try {
+      const raw = localStorage.getItem('gym-app-workout-timer');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data.workoutStartTime) return;
+      // Only restore if we don't already have an active timer
+      if (!this.state.workoutStartTime) {
+        this.state.workoutStartTime = data.workoutStartTime;
+        this._startWorkoutTimer();
+      }
+    } catch (e) {
+      localStorage.removeItem('gym-app-workout-timer');
+    }
   },
 
 

@@ -1,10 +1,11 @@
 // timer.js — Circular rest timer with bottom sheet
-// Uses absolute wall-clock timestamps so the timer stays accurate even
-// when the phone screen is off or the browser tab is backgrounded.
+// Uses absolute wall-clock timestamps + localStorage persistence so the
+// timer stays accurate even when iOS suspends the page on app switch.
 
 const RestTimer = {
   // Config
   RADIUS: 52,
+  STORAGE_KEY: 'gym-app-rest-timer',
 
   // State
   duration: 0,
@@ -14,6 +15,7 @@ const RestTimer = {
   onComplete: null,
   isRunning: false,
   circumference: 0,
+  _restoredFromStorage: false,
 
   init() {
     this.circumference = 2 * Math.PI * this.RADIUS;
@@ -22,18 +24,84 @@ const RestTimer = {
       circle.style.strokeDasharray = this.circumference;
       circle.style.strokeDashoffset = '0';
     }
-    this._bindVisibility();
+    this._bindLifecycle();
+    this._tryRestore();
   },
 
-  // Keep timer accurate across visibility changes (screen off / app switch).
-  _bindVisibility() {
-    document.addEventListener('visibilitychange', () => {
-      if (!this.isRunning || document.visibilityState !== 'visible') return;
+  // Restore a timer that was running before iOS suspended the page.
+  _tryRestore() {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data.endTime || !data.duration || !data.onCompletePending) return;
+
+      const remaining = Math.max(0, Math.ceil((data.endTime - Date.now()) / 1000));
+      if (remaining <= 0) {
+        localStorage.removeItem(this.STORAGE_KEY);
+        return;
+      }
+
+      // Timer was still running — resume it.
+      // Can't serialize onComplete, so we just show the sheet and let the
+      // interval tick. The caller (app.js completeSet) already saved progress,
+      // so the set state is consistent even if onComplete is lost.
+      this.duration = data.duration;
+      this.endTime = data.endTime;
+      this.isRunning = true;
+      this._restoredFromStorage = true;
+      this._recalcFromWallClock();
+      this._showSheet();
+
+      this.intervalId = setInterval(() => {
+        this._recalcFromWallClock();
+        if (this.remaining <= 0) {
+          this._complete();
+        }
+      }, 1000);
+    } catch (e) {
+      localStorage.removeItem(this.STORAGE_KEY);
+    }
+  },
+
+  // Listen for both visibilitychange AND pageshow (iOS uses pageshow).
+  _bindLifecycle() {
+    const onReturn = () => {
+      if (!this.isRunning) return;
       this._recalcFromWallClock();
       if (this.remaining <= 0) {
         this._complete();
       }
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') onReturn();
+      if (document.visibilityState === 'hidden') this._persistToStorage();
     });
+
+    window.addEventListener('pageshow', () => {
+      onReturn();
+    });
+
+    window.addEventListener('pagehide', () => {
+      this._persistToStorage();
+    });
+  },
+
+  _persistToStorage() {
+    if (!this.isRunning || this.remaining <= 0) return;
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+        endTime: this.endTime,
+        duration: this.duration,
+        onCompletePending: true
+      }));
+    } catch (e) {}
+  },
+
+  _clearStorage() {
+    localStorage.removeItem(this.STORAGE_KEY);
+    this._restoredFromStorage = false;
   },
 
   // Recalculate remaining seconds from the absolute deadline.
@@ -50,9 +118,11 @@ const RestTimer = {
     this.endTime = Date.now() + seconds * 1000;
     this.onComplete = onComplete;
     this.isRunning = true;
+    this._restoredFromStorage = false;
 
     this._recalcFromWallClock();
     this._showSheet();
+    this._persistToStorage();
 
     this.intervalId = setInterval(() => {
       this._recalcFromWallClock();
@@ -69,19 +139,25 @@ const RestTimer = {
       this.intervalId = null;
     }
     this.isRunning = false;
+    this._clearStorage();
   },
 
   // Skip the rest early — same callback as natural completion
   skip() {
     if (!this.isRunning) return;
+    const cb = this.onComplete;
     this.stop();
     SoundManager.playChime();
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     this._hideSheet();
-    if (this.onComplete) this.onComplete();
+    if (cb) cb();
   },
 
   _complete() {
+    // If this timer was restored from storage, we don't have the original
+    // onComplete callback. The set state is already correct from saved progress,
+    // so we just hide the sheet and let the user continue.
+    const cb = this._restoredFromStorage ? null : this.onComplete;
     this.stop();
 
     // Flash the circle red
@@ -96,7 +172,7 @@ const RestTimer = {
 
     setTimeout(() => {
       this._hideSheet();
-      if (this.onComplete) this.onComplete();
+      if (cb) cb();
     }, 650);
   },
 
