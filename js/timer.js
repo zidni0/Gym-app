@@ -1,4 +1,6 @@
 // timer.js — Circular rest timer with bottom sheet
+// Uses absolute wall-clock timestamps so the timer stays accurate even
+// when the phone screen is off or the browser tab is backgrounded.
 
 const RestTimer = {
   // Config
@@ -7,6 +9,7 @@ const RestTimer = {
   // State
   duration: 0,
   remaining: 0,
+  endTime: 0,            // absolute wall-clock deadline (ms)
   intervalId: null,
   onComplete: null,
   isRunning: false,
@@ -19,22 +22,40 @@ const RestTimer = {
       circle.style.strokeDasharray = this.circumference;
       circle.style.strokeDashoffset = '0';
     }
+    this._bindVisibility();
+  },
+
+  // Keep timer accurate across visibility changes (screen off / app switch).
+  _bindVisibility() {
+    document.addEventListener('visibilitychange', () => {
+      if (!this.isRunning || document.visibilityState !== 'visible') return;
+      this._recalcFromWallClock();
+      if (this.remaining <= 0) {
+        this._complete();
+      }
+    });
+  },
+
+  // Recalculate remaining seconds from the absolute deadline.
+  _recalcFromWallClock() {
+    const now = Date.now();
+    this.remaining = Math.max(0, Math.ceil((this.endTime - now) / 1000));
+    this._updateDisplay();
   },
 
   // Start the timer. seconds: rest duration. onComplete: callback when done or skipped.
   start(seconds, onComplete) {
     this.stop();
     this.duration = seconds;
-    this.remaining = seconds;
+    this.endTime = Date.now() + seconds * 1000;
     this.onComplete = onComplete;
     this.isRunning = true;
 
-    this._updateDisplay();
+    this._recalcFromWallClock();
     this._showSheet();
 
     this.intervalId = setInterval(() => {
-      this.remaining--;
-      this._updateDisplay();
+      this._recalcFromWallClock();
 
       if (this.remaining <= 0) {
         this._complete();
