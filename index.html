@@ -82,7 +82,32 @@
 
 
   <!-- ========================================================
-       SCREEN 3 — EXERCISE VIEW
+       SCREEN 3 — EXERCISE MENU (free-form picker)
+       ======================================================== -->
+  <div id="screen-exercise-menu" class="screen">
+    <div class="menu-topbar">
+      <button class="btn-back" id="btn-menu-back" aria-label="End workout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6"
+            stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="topbar-center">
+        <span class="exercise-day-label" id="menu-day-label">DAY 1 · PUSH</span>
+        <span class="exercise-counter" id="menu-progress">0 of 8 done</span>
+      </div>
+      <div class="workout-timer" id="workout-timer-menu">00:00</div>
+    </div>
+
+    <div class="menu-content" id="menu-content">
+      <!-- Exercise cards rendered by app.js -->
+    </div>
+  </div>
+
+
+  <!-- ========================================================
+       SCREEN 4 — EXERCISE VIEW
        ======================================================== -->
   <div id="screen-exercise" class="screen">
 

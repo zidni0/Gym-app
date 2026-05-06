@@ -44,7 +44,6 @@ function startConfetti() {
         p.y += p.vy;
         p.rotation += p.rotationSpeed;
 
-        // Fade out in lower 40% of screen
         if (p.y > canvas.height * 0.6) {
           p.opacity -= 0.018;
         }
@@ -68,7 +67,6 @@ function startConfetti() {
 
   draw();
 
-  // Hard stop after 5 seconds to clean up
   setTimeout(() => {
     cancelAnimationFrame(animId);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -77,9 +75,7 @@ function startConfetti() {
 
 
 // ============================================================
-// WEIGHT LOG — Bonus feature: track weight used per exercise
-// Stored in localStorage as a map: "dayId|exerciseName|YYYY-MM-DD" → "weight string"
-// Shows "Last: X" on subsequent workouts for progressive overload awareness
+// WEIGHT LOG
 // ============================================================
 const WeightLog = {
   storageKey: 'gym-app-weights',
@@ -92,7 +88,6 @@ const WeightLog = {
     }
   },
 
-  // Get last logged weight for an exercise (any date, most recent)
   getLastWeight(dayId, exerciseName) {
     const all = this._getAll();
     const prefix = `${dayId}|${exerciseName}|`;
@@ -103,7 +98,6 @@ const WeightLog = {
     return matching.length > 0 ? all[matching[0]] : null;
   },
 
-  // Save weight for today
   saveWeight(dayId, exerciseName, weight) {
     if (!weight || weight.trim() === '') return;
     const all = this._getAll();
@@ -128,13 +122,14 @@ const App = {
     selectedDayIndex: null,
     currentExerciseIndex: 0,
     currentSet: 1,
+    completedExercises: {},    // Map of exerciseIndex → true for completed exercises
     workoutStartTime: null,
     workoutTimerInterval: null,
     wakeLock: null,
     quoteIndex: 0,
     quoteInterval: null,
     currentScreenEl: null,
-    setDoneLocked: false, // prevent double-tap
+    setDoneLocked: false,
   },
 
   quotes: [
@@ -160,12 +155,9 @@ const App = {
     this.checkResumeData();
     this.setupEventListeners();
 
-    // Show home screen as starting point
     this.state.currentScreenEl = document.getElementById('screen-home');
     document.getElementById('screen-home').style.visibility = 'visible';
 
-    // Keep workout timer accurate when user returns from screen-off / app switch.
-    // Uses both visibilitychange and pageshow (iOS relies on pageshow).
     const updateTimerDisplay = () => {
       if (!this.state.workoutStartTime) return;
       const elapsed = Date.now() - this.state.workoutStartTime;
@@ -173,6 +165,8 @@ const App = {
       const s = Math.floor((elapsed % 60000) / 1000);
       const el = document.getElementById('workout-timer');
       if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const elMenu = document.getElementById('workout-timer-menu');
+      if (elMenu) elMenu.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     };
 
     document.addEventListener('visibilitychange', () => {
@@ -192,8 +186,6 @@ const App = {
 
   // ----------------------------------------------------------
   // SCREEN NAVIGATION
-  // Smooth slide transitions — forward slides right-to-left,
-  // back slides left-to-right (iOS pattern).
   // ----------------------------------------------------------
   navigateTo(targetId, direction = 'forward') {
     const target = document.getElementById(`screen-${targetId}`);
@@ -204,7 +196,6 @@ const App = {
     const DURATION = 420;
     const easing = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
-    // Position target off-screen instantly (no transition)
     target.style.transition = 'none';
     target.style.transform = direction === 'forward' ? 'translateX(100%)' : 'translateX(-28%)';
     target.style.visibility = 'visible';
@@ -212,10 +203,8 @@ const App = {
 
     if (current) current.style.zIndex = '1';
 
-    // Force reflow so the initial transform is applied before we add the transition
     target.getBoundingClientRect();
 
-    // Now animate both screens
     const transition = `transform ${DURATION}ms ${easing}`;
 
     target.style.transition = transition;
@@ -226,7 +215,6 @@ const App = {
       current.style.transform = direction === 'forward' ? 'translateX(-28%)' : 'translateX(100%)';
     }
 
-    // Clean up after animation
     setTimeout(() => {
       if (current) {
         current.style.visibility = 'hidden';
@@ -314,8 +302,8 @@ const App = {
     this.state.selectedDayIndex = dayIndex;
     this.state.currentExerciseIndex = 0;
     this.state.currentSet = 1;
+    this.state.completedExercises = {};
 
-    // Brief glow animation on the card before transition
     const cards = document.querySelectorAll('.day-card');
     const card = cards[dayIndex];
     if (card) {
@@ -347,15 +335,13 @@ const App = {
     const day = workoutData.days[data.dayIndex];
     if (!day) { localStorage.removeItem('gym-app-progress'); return; }
 
-    const exercise = day.exercises[data.exerciseIndex];
-    if (!exercise) { localStorage.removeItem('gym-app-progress'); return; }
-
     const banner = document.getElementById('resume-banner');
     const detail = document.getElementById('resume-detail');
 
     if (!banner || !detail) return;
 
-    detail.textContent = `${day.label} · ${day.name}  —  ${exercise.name}`;
+    const completedCount = data.completedExercises ? Object.keys(data.completedExercises).length : 0;
+    detail.textContent = `${day.label} · ${day.name}  —  ${completedCount} of ${day.exercises.length} done`;
     banner.classList.remove('hidden');
 
     document.getElementById('resume-yes').addEventListener('click', () => {
@@ -372,6 +358,7 @@ const App = {
     this.state.selectedDayIndex = data.dayIndex;
     this.state.currentExerciseIndex = data.exerciseIndex;
     this.state.currentSet = data.currentSet || 1;
+    this.state.completedExercises = data.completedExercises || {};
 
     const banner = document.getElementById('resume-banner');
     if (banner) banner.classList.add('hidden');
@@ -384,6 +371,7 @@ const App = {
       dayIndex: this.state.selectedDayIndex,
       exerciseIndex: this.state.currentExerciseIndex,
       currentSet: this.state.currentSet,
+      completedExercises: this.state.completedExercises,
       savedAt: Date.now()
     };
     localStorage.setItem('gym-app-progress', JSON.stringify(data));
@@ -395,7 +383,7 @@ const App = {
 
 
   // ----------------------------------------------------------
-  // WARMUP → EXERCISE TRANSITION
+  // WARMUP → MENU TRANSITION
   // ----------------------------------------------------------
   _beginWorkout() {
     this.state.workoutStartTime = Date.now();
@@ -403,49 +391,133 @@ const App = {
     this._startWorkoutTimer();
     this._requestWakeLock();
 
+    this.navigateTo('exercise-menu', 'forward');
+
+    setTimeout(() => {
+      this.renderExerciseMenu();
+    }, 100);
+  },
+
+
+  // ----------------------------------------------------------
+  // EXERCISE MENU — Free-form exercise picker
+  // ----------------------------------------------------------
+  renderExerciseMenu() {
+    const day = workoutData.days[this.state.selectedDayIndex];
+    if (!day) return;
+
+    const dayLabelEl = document.getElementById('menu-day-label');
+    if (dayLabelEl) dayLabelEl.textContent = `${day.label} · ${day.name}`;
+
+    const progressEl = document.getElementById('menu-progress');
+    const completedCount = Object.keys(this.state.completedExercises).length;
+    if (progressEl) progressEl.textContent = `${completedCount} of ${day.exercises.length} done`;
+
+    const content = document.getElementById('menu-content');
+    if (!content) return;
+
+    content.innerHTML = '';
+
+    day.exercises.forEach((exercise, index) => {
+      const isCompleted = this.state.completedExercises[index];
+      const card = document.createElement('div');
+      card.className = `menu-exercise-card${isCompleted ? ' completed' : ''}`;
+      card.style.animationDelay = `${index * 50}ms`;
+
+      card.innerHTML = `
+        <div class="menu-exercise-check">✓</div>
+        <div class="menu-exercise-info">
+          <div class="menu-exercise-name">${exercise.name}</div>
+          <div class="menu-exercise-meta">
+            <span>${exercise.muscles}</span>
+            <span>${exercise.sets} sets · ${exercise.reps} reps</span>
+          </div>
+        </div>
+        <div class="menu-exercise-arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      `;
+
+      card.addEventListener('click', () => this.selectExercise(index));
+      content.appendChild(card);
+    });
+
+    // Finish bar
+    const allDone = completedCount >= day.exercises.length;
+    const finishBar = document.createElement('div');
+    finishBar.className = 'menu-finish-bar';
+    finishBar.innerHTML = `
+      <button class="${allDone ? 'btn-finish-workout' : 'btn-primary'}" id="btn-finish-menu">
+        ${allDone ? 'FINISH WORKOUT' : 'End Workout Early'}
+      </button>
+    `;
+    content.appendChild(finishBar);
+
+    document.getElementById('btn-finish-menu')?.addEventListener('click', () => {
+      if (allDone) {
+        this.showDayComplete();
+      } else {
+        this.showModal();
+      }
+    });
+
+    this.saveProgress();
+  },
+
+  selectExercise(exerciseIndex) {
+    const day = workoutData.days[this.state.selectedDayIndex];
+    if (!day) return;
+
+    const exercise = day.exercises[exerciseIndex];
+    if (!exercise) return;
+
+    // If already completed, still allow re-doing (remove from completed so it can be re-tracked)
+    // Actually, let the user re-do if they want — they can always redo an exercise.
+
+    this.state.currentExerciseIndex = exerciseIndex;
+    this.state.currentSet = 1;
+    this.state.setDoneLocked = false;
+
     this.navigateTo('exercise', 'forward');
 
-    // Load first exercise after the screen slides in
     setTimeout(() => {
-      this.loadExercise(this.state.currentExerciseIndex);
+      this.loadExercise(exerciseIndex);
     }, 150);
   },
 
 
   // ----------------------------------------------------------
-  // EXERCISE SCREEN — Load exercise data into the view
+  // EXERCISE SCREEN
   // ----------------------------------------------------------
   loadExercise(exerciseIndex) {
     const day = workoutData.days[this.state.selectedDayIndex];
     if (!day) return;
 
     const exercise = day.exercises[exerciseIndex];
-    if (!exercise) {
-      this.showDayComplete();
-      return;
-    }
+    if (!exercise) return;
 
     this.state.currentExerciseIndex = exerciseIndex;
     this.state.currentSet = 1;
     this.state.setDoneLocked = false;
 
-    // Progress bar
-    const progress = ((exerciseIndex + 1) / day.exercises.length) * 100;
+    // Progress bar — show overall day progress
+    const completedCount = Object.keys(this.state.completedExercises).length;
+    const total = day.exercises.length;
+    const progress = ((completedCount + 1) / total) * 100;
     const progressBar = document.getElementById('exercise-progress-bar');
     if (progressBar) progressBar.style.width = `${progress}%`;
 
-    // Exercise counter label in topbar
     const counterEl = document.getElementById('exercise-counter');
-    if (counterEl) counterEl.textContent = `${exerciseIndex + 1} of ${day.exercises.length}`;
+    if (counterEl) counterEl.textContent = `${completedCount + 1} of ${total}`;
 
-    // Day label
     const dayLabelEl = document.getElementById('exercise-day-label');
     if (dayLabelEl) dayLabelEl.textContent = `${day.label} · ${day.name}`;
 
-    // Load video
     this._loadVideo(exercise);
 
-    // Exercise info
     const nameEl = document.getElementById('exercise-name');
     const musclesEl = document.getElementById('exercise-muscles');
     const tagsEl = document.getElementById('equipment-tags');
@@ -453,22 +525,19 @@ const App = {
     if (nameEl) nameEl.textContent = exercise.name;
     if (musclesEl) musclesEl.textContent = exercise.muscles;
 
-if (tagsEl) {
-  tagsEl.innerHTML = '';
-  exercise.equipment.slice(0, 3).forEach(eq => {
-    const tag = document.createElement('span');
-    tag.className = 'equipment-tag';
-    tag.textContent = eq;
-    tagsEl.appendChild(tag);
-  });
-}
-    // Set tracker display
-    this._updateSetDisplay();
+    if (tagsEl) {
+      tagsEl.innerHTML = '';
+      exercise.equipment.slice(0, 3).forEach(eq => {
+        const tag = document.createElement('span');
+        tag.className = 'equipment-tag';
+        tag.textContent = eq;
+        tagsEl.appendChild(tag);
+      });
+    }
 
-    // Weight log hint — show last logged weight if available
+    this._updateSetDisplay();
     this._updateWeightHint(exercise.name);
 
-    // Reset set action area
     const btnSetDone = document.getElementById('btn-set-done');
     const completeMsg = document.getElementById('exercise-complete-msg');
     if (btnSetDone) {
@@ -477,39 +546,37 @@ if (tagsEl) {
     }
     if (completeMsg) completeMsg.classList.remove('visible');
 
-    // Next exercise preview
     this._updateNextPreview(exerciseIndex);
 
-    // Slide-in animation on exercise content
     const content = document.querySelector('.exercise-content');
     if (content) {
       content.classList.remove('slide-in');
-      void content.offsetWidth; // trigger reflow
+      void content.offsetWidth;
       content.classList.add('slide-in');
     }
 
-this.saveProgress();
-},
+    this.saveProgress();
+  },
 
-_loadVideo(exercise) {
-  const iframe = document.getElementById('exercise-video');
-  const placeholder = document.getElementById('video-placeholder');
-  const placeholderText = document.getElementById('video-placeholder-text');
+  _loadVideo(exercise) {
+    const iframe = document.getElementById('exercise-video');
+    const placeholder = document.getElementById('video-placeholder');
+    const placeholderText = document.getElementById('video-placeholder-text');
 
-  if (!iframe || !placeholder) return;
+    if (!iframe || !placeholder) return;
 
-  iframe.style.display = 'block';
-  placeholder.classList.remove('visible');
+    iframe.style.display = 'block';
+    placeholder.classList.remove('visible');
 
-  if (!exercise.video) {
-    iframe.style.display = 'none';
-    placeholder.classList.add('visible');
-    if (placeholderText) placeholderText.textContent = exercise.name;
-    return;
-  }
+    if (!exercise.video) {
+      iframe.style.display = 'none';
+      placeholder.classList.add('visible');
+      if (placeholderText) placeholderText.textContent = exercise.name;
+      return;
+    }
 
-  iframe.src = exercise.video;
-},
+    iframe.src = exercise.video;
+  },
 
   _updateSetDisplay() {
     const day = workoutData.days[this.state.selectedDayIndex];
@@ -523,15 +590,16 @@ _loadVideo(exercise) {
   },
 
   _updateNextPreview(currentIndex) {
+    // Instead of showing the next linear exercise, show remaining exercises count
     const day = workoutData.days[this.state.selectedDayIndex];
-    const next = day.exercises[currentIndex + 1];
+    const completedCount = Object.keys(this.state.completedExercises).length;
+    const remaining = day.exercises.length - completedCount - 1; // minus current
     const el = document.getElementById('next-exercise');
     if (el) {
-      el.textContent = next ? `Next up: ${next.name}` : 'Final exercise — finish strong!';
+      el.textContent = remaining > 0 ? `${remaining} exercise${remaining > 1 ? 's' : ''} remaining` : 'Last exercise — finish strong!';
     }
   },
 
-  // Bonus: show last weight hint below set status
   _updateWeightHint(exerciseName) {
     const day = workoutData.days[this.state.selectedDayIndex];
     const hintEl = document.getElementById('weight-hint');
@@ -556,16 +624,13 @@ _loadVideo(exercise) {
     const day = workoutData.days[this.state.selectedDayIndex];
     const exercise = day.exercises[this.state.currentExerciseIndex];
 
-    // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(50);
 
-    // Save weight if user typed something
     const weightInputEl = document.getElementById('weight-input');
     if (weightInputEl && weightInputEl.value.trim()) {
       WeightLog.saveWeight(day.id, exercise.name, weightInputEl.value.trim());
     }
 
-    // Pulse button, then handle logic
     const btn = document.getElementById('btn-set-done');
     if (btn) {
       btn.classList.add('pulse');
@@ -575,11 +640,9 @@ _loadVideo(exercise) {
     const isLastSet = this.state.currentSet >= exercise.sets;
 
     if (isLastSet) {
-      // All sets complete
       if (btn) btn.style.display = 'none';
       this._showExerciseComplete();
     } else {
-      // More sets — start rest timer
       this.state.currentSet++;
       this._updateSetDisplay();
 
@@ -597,7 +660,6 @@ _loadVideo(exercise) {
           }
         });
       } else {
-        // No rest (e.g. cardio)
         this.state.setDoneLocked = false;
         if (btn) {
           btn.style.display = 'flex';
@@ -610,17 +672,24 @@ _loadVideo(exercise) {
   },
 
   _showExerciseComplete() {
+    // Mark this exercise as completed
+    this.state.completedExercises[this.state.currentExerciseIndex] = true;
+
     const completeMsg = document.getElementById('exercise-complete-msg');
     if (completeMsg) completeMsg.classList.add('visible');
 
     const day = workoutData.days[this.state.selectedDayIndex];
-    const isLastExercise = this.state.currentExerciseIndex >= day.exercises.length - 1;
+    const allDone = Object.keys(this.state.completedExercises).length >= day.exercises.length;
+
+    this.saveProgress();
 
     setTimeout(() => {
-      if (isLastExercise) {
+      if (allDone) {
         this.showDayComplete();
       } else {
-        this.loadExercise(this.state.currentExerciseIndex + 1);
+        // Go back to the exercise menu so user can pick the next exercise
+        this.navigateTo('exercise-menu', 'back');
+        setTimeout(() => this.renderExerciseMenu(), 100);
       }
     }, 1500);
   },
@@ -646,13 +715,12 @@ _loadVideo(exercise) {
 
     this.navigateTo('complete', 'forward');
 
-    // Trigger confetti and checkmark after screen settles
     setTimeout(() => startConfetti(), 350);
   },
 
 
   // ----------------------------------------------------------
-  // END WORKOUT (back button → confirm modal)
+  // END WORKOUT
   // ----------------------------------------------------------
   endWorkout() {
     this._stopWorkoutTimer();
@@ -661,21 +729,18 @@ _loadVideo(exercise) {
     RestTimer.stop();
     RestTimer.hideSheet();
 
-    // Stop video
-    const video = document.getElementById('exercise-video');
-    if (video) {
-      video.pause();
-      video.src = '';
+    const iframe = document.getElementById('exercise-video');
+    if (iframe) {
+      iframe.src = '';
     }
 
-    // Reset state
     this.state.selectedDayIndex = null;
     this.state.currentExerciseIndex = 0;
     this.state.currentSet = 1;
+    this.state.completedExercises = {};
     this.state.workoutStartTime = null;
     this.state.setDoneLocked = false;
 
-    // Re-render cards so animations replay
     this.renderDayCards();
     this.startQuoteRotation();
 
@@ -684,17 +749,22 @@ _loadVideo(exercise) {
 
 
   // ----------------------------------------------------------
-  // WORKOUT ELAPSED TIMER (top bar MM:SS)
+  // WORKOUT ELAPSED TIMER
   // ----------------------------------------------------------
   _startWorkoutTimer() {
-    const el = document.getElementById('workout-timer');
-    this.state.workoutTimerInterval = setInterval(() => {
+    const updateEls = () => {
       if (!this.state.workoutStartTime) return;
       const elapsed = Date.now() - this.state.workoutStartTime;
       const m = Math.floor(elapsed / 60000);
       const s = Math.floor((elapsed % 60000) / 1000);
-      if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }, 1000);
+      const str = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const el = document.getElementById('workout-timer');
+      if (el) el.textContent = str;
+      const elMenu = document.getElementById('workout-timer-menu');
+      if (elMenu) elMenu.textContent = str;
+    };
+
+    this.state.workoutTimerInterval = setInterval(updateEls, 1000);
   },
 
   _stopWorkoutTimer() {
@@ -704,6 +774,8 @@ _loadVideo(exercise) {
     }
     const el = document.getElementById('workout-timer');
     if (el) el.textContent = '00:00';
+    const elMenu = document.getElementById('workout-timer-menu');
+    if (elMenu) elMenu.textContent = '00:00';
     localStorage.removeItem('gym-app-workout-timer');
   },
 
@@ -722,7 +794,6 @@ _loadVideo(exercise) {
       if (!raw) return;
       const data = JSON.parse(raw);
       if (!data.workoutStartTime) return;
-      // Only restore if we don't already have an active timer
       if (!this.state.workoutStartTime) {
         this.state.workoutStartTime = data.workoutStartTime;
         this._startWorkoutTimer();
@@ -741,15 +812,14 @@ _loadVideo(exercise) {
     try {
       this.state.wakeLock = await navigator.wakeLock.request('screen');
 
-      // Re-acquire if page becomes visible again (e.g. user switches app)
       document.addEventListener('visibilitychange', async () => {
         if (document.visibilityState === 'visible' && this.state.workoutStartTime) {
           try {
             this.state.wakeLock = await navigator.wakeLock.request('screen');
-          } catch (e) { /* silent */ }
+          } catch (e) {}
         }
       });
-    } catch (e) { /* silent — not all browsers support this */ }
+    } catch (e) {}
   },
 
   _releaseWakeLock() {
@@ -783,8 +853,14 @@ _loadVideo(exercise) {
       this._beginWorkout();
     });
 
-    // Back button on exercise screen
+    // Back button on exercise screen → go to menu
     document.getElementById('btn-back')?.addEventListener('click', () => {
+      this.navigateTo('exercise-menu', 'back');
+      setTimeout(() => this.renderExerciseMenu(), 100);
+    });
+
+    // Back button on menu → end workout modal
+    document.getElementById('btn-menu-back')?.addEventListener('click', () => {
       this.showModal();
     });
 
@@ -821,7 +897,7 @@ _loadVideo(exercise) {
       this.navigateTo('home', 'back');
     });
 
-    // Weight log: save on Enter key or blur
+    // Weight log: save on Enter key
     const weightInput = document.getElementById('weight-input');
     if (weightInput) {
       weightInput.addEventListener('keydown', (e) => {
